@@ -1,6 +1,14 @@
 @echo off
 echo.
-echo 🚀 OmniDetector Ultimate v3.0 - Windows Setup
+echo 🚀 OmniDetector Ultima# Download models and dataset
+echo.
+echo 📥 Downloading YOLO models and COCO128 dataset...
+python scripts\download_models.py
+if errorlevel 1 (
+    echo ❌ Failed to download models and dataset
+    pause
+    exit /b 1
+) Windows Setup
 echo ================================================
 echo.
 
@@ -59,11 +67,16 @@ echo ================================================
 echo 🎉 OmniDetector Ultimate setup complete!
 echo ================================================
 echo.
+echo ✅ Ready to use:
+echo    • YOLO models downloaded
+echo    • COCO128 dataset downloaded  
+echo    • All dependencies installed
+echo.
 echo 🚀 To start OmniDetector:
 echo    1. Activate environment: .venv\Scripts\activate
 echo    2. Run application: streamlit run app.py
 echo    3. Open browser: http://localhost:8501
 echo.
-echo 💡 Quick start: setup_and_run.bat
+echo 💡 Quick start: run.bat
 echo.
 pause

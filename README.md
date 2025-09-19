@@ -305,7 +305,104 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 📞 Support
+## � Complete Setup Guide
+
+### 🚀 **Automatic Setup (Recommended)**
+
+**Windows:**
+```bash
+git clone https://github.com/123DS9472396/omnidetector-ultimate.git
+cd omnidetector-ultimate
+.\setup.bat
+```
+
+**Linux/Mac:**
+```bash
+git clone https://github.com/123DS9472396/omnidetector-ultimate.git
+cd omnidetector-ultimate
+chmod +x setup.sh && ./setup.sh
+```
+
+### 🔧 **Manual Setup Steps**
+
+1. **Clone Repository:**
+```bash
+git clone https://github.com/123DS9472396/omnidetector-ultimate.git
+cd omnidetector-ultimate
+```
+
+2. **Install Python Dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+3. **Download YOLO Models & COCO128 Dataset:**
+```bash
+python scripts/download_models.py
+```
+
+This downloads:
+- ✅ **YOLOv8n.pt** (6MB) - Fastest model for real-time detection
+- ✅ **YOLOv8s.pt** (22MB) - Balanced speed/accuracy  
+- ✅ **YOLOv8m.pt** (52MB) - Highest accuracy
+- ✅ **COCO128 Dataset** (6.8MB) - 128 sample images for testing
+
+4. **Launch Application:**
+```bash
+streamlit run app.py
+```
+**🌐 Access at:** `http://localhost:8501`
+
+### 📁 **What Gets Downloaded**
+
+```
+data/
+├── coco128.yaml           # Dataset configuration (in repo)
+└── coco128/              # Downloaded by script
+    ├── images/           # 128 sample COCO images  
+    │   └── train2017/    # Training images
+    ├── labels/           # YOLO format annotations
+    │   └── train2017/    # Label files
+    ├── README.txt        # Dataset info
+    └── LICENSE           # Dataset license
+
+models/
+├── yolov8n.pt           # Downloaded: 6MB nano model
+├── yolov8s.pt           # Downloaded: 22MB small model  
+└── yolov8m.pt           # Downloaded: 52MB medium model
+```
+
+### ⚡ **Quick Test After Setup**
+
+1. **Test Image Detection:** Upload any image in the Image Detection tab
+2. **Test Live Webcam:** Click "Start" in Live Webcam tab (requires camera permission)  
+3. **View Sample Data:** Images from COCO128 dataset are available for testing
+
+### 🔧 **Troubleshooting Downloads**
+
+**Models not downloading?**
+```bash
+# Direct download alternative
+wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt -P models/
+wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt -P models/
+wget https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8m.pt -P models/
+```
+
+**COCO128 dataset not downloading?**
+```bash
+# Manual download
+wget https://ultralytics.com/assets/coco128.zip
+unzip coco128.zip -d data/
+```
+
+**Permission issues on Linux/Mac?**
+```bash
+chmod +x setup.sh scripts/download_models.py
+```
+
+---
+
+## �📞 Support
 
 Need help? We've got you covered:
 

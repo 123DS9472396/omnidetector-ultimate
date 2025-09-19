@@ -39,12 +39,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Download models
+# Download models and dataset
 echo
-echo "📥 Downloading YOLO models..."
+echo "📥 Downloading YOLO models and COCO128 dataset..."  
 python scripts/download_models.py
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to download models"
+    echo "❌ Failed to download models and dataset"
     exit 1
 fi
 
@@ -53,6 +53,11 @@ echo
 echo "================================================"
 echo "🎉 OmniDetector Ultimate setup complete!"
 echo "================================================"
+echo
+echo "✅ Ready to use:"
+echo "   • YOLO models downloaded"
+echo "   • COCO128 dataset downloaded"
+echo "   • All dependencies installed"
 echo
 echo "🚀 To start OmniDetector:"
 echo "   1. Activate environment: source .venv/bin/activate"

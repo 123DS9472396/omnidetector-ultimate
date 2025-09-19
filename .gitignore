@@ -65,10 +65,16 @@ omnidetector.log
 *.engine
 models/*.pt
 
-# Data files
-data/coco128/
+# Data files (large datasets)
+data/coco128/images/
+data/coco128/labels/
 runs/
 output_*.jpg
+
+# Keep essential config files
+!data/coco128.yaml
+!data/coco128/README.txt
+!data/coco128/LICENSE
 
 # Temporary files
 *.tmp
