@@ -1,0 +1,88 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files  
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# OmniDetector specific files
+*.log
+*.backup*
+.omnidetector_initialized
+.webrtc_config.json
+omnidetector.log
+
+# Model files (download via script)
+*.pt
+*.onnx
+*.engine
+models/*.pt
+
+# Data files
+data/coco128/
+runs/
+output_*.jpg
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Files to remove from repo
+FIXES_APPLIED.md
+WARP.md  
+CONTRIBUTING.md
+Project_Learning_Guide.html
+github_upload.*
+start_omnidetector.bat
+test_setup.py
+Dockerfile
+app.py.backup*
