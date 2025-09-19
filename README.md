@@ -4,7 +4,7 @@
 
 ![OmniDetector Banner](https://img.shields.io/badge/OmniDetector-Ultimate%20v3.0-brightgreen?style=for-the-badge&logo=python&logoColor=white)
 
-**🎯 World's Most Advanced Real-Time Object Detection System**
+**🎯 Real-Time YOLO Object Detection with Streamlit WebUI**
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-red?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
@@ -12,7 +12,7 @@
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.9.0-green?style=flat-square&logo=opencv&logoColor=white)](https://opencv.org)
 [![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)](LICENSE)
 
-*Professional AI-Powered Object Detection • Real-Time Analysis • Advanced Analytics*
+*YOLOv8 Computer Vision • Real-Time Detection • Machine Learning Analytics*
 
 [🎥 Screenshots](#-screenshots) • [⚡ Quick Start](#-quick-start) • [📖 Features](#-features) • [🛠️ Installation](#️-installation)
 
@@ -20,19 +20,19 @@
 
 ---
 
-## 🌟 What Makes OmniDetector Ultimate?
+## 🌟 Advanced YOLO Object Detection System
 
-**OmniDetector Ultimate v3.0** revolutionizes computer vision with a complete AI-powered visual intelligence platform. Built for professionals, researchers, and enthusiasts who demand the best in object detection technology.
+**OmniDetector Ultimate v3.0** is a complete computer vision platform using YOLOv8 neural networks for real-time object detection. Built for developers, researchers, and computer vision enthusiasts.
 
-### ✨ **Why Choose OmniDetector?**
-- 🎯 **1000+ Object Classes** - Detect people, vehicles, animals, objects, and more
-- ⚡ **Lightning-Fast Processing** - Optimized YOLO models for real-time performance  
-- 🧠 **10 AI/ML Algorithms** - Advanced machine learning for enhanced accuracy
-- 🎨 **Professional Web Interface** - Beautiful, intuitive Streamlit application
-- 📊 **Comprehensive Analytics** - Detailed statistics, insights, and visualizations
-- 🎥 **Multi-Source Detection** - Images, videos, and live camera feeds
-- 🔍 **Precision Control** - From ultra-fast to high-accuracy detection modes
-- 📱 **Zero Installation Hassle** - Web-based interface, runs anywhere
+### ✨ **Key Features**
+- 🎯 **80+ Object Classes** - People, vehicles, animals, electronics, household items
+- ⚡ **Real-Time YOLO Processing** - YOLOv8n, YOLOv8s, YOLOv8m model support  
+- 🧠 **Machine Learning Pipeline** - 10 ML algorithms including clustering, classification, regression
+- 🎨 **Streamlit Web Interface** - Interactive dashboard with live camera feed
+- 📊 **Detection Analytics** - Performance metrics, confidence scores, object tracking
+- 🎥 **Multi-Input Support** - Image upload, video processing, webcam streaming
+- 🔍 **Configurable Parameters** - Confidence threshold, IOU settings, detection limits
+- 📱 **Browser-Based** - No desktop installation required
 
 ---
 
@@ -44,7 +44,7 @@ Get up and running in just 5 minutes!
 
 ```bash
 # 1️⃣ Clone the repository
-git clone https://github.com/your-username/omnidetector-ultimate.git
+git clone https://github.com/123DS9472396/omnidetector-ultimate.git
 cd omnidetector-ultimate
 
 # 2️⃣ Run the setup script (Windows)
@@ -100,11 +100,11 @@ streamlit run app.py
 - **📹 Live Webcam** - Real-time detection from your camera
 - **📊 Analytics Dashboard** - Comprehensive statistics and insights
 
-### 🧠 **AI-Powered Intelligence**
-- **YOLOv8 Models** - Nano, Small, Medium, Large, and Extra-Large variants
-- **Real-Time Processing** - Optimized for CPU performance
-- **Advanced ML** - 10 machine learning algorithms for enhanced analysis
-- **Smart Analytics** - Automated insights and performance tracking
+### 🧠 **YOLO & Machine Learning**
+- **YOLOv8 Neural Networks** - Nano, Small, Medium model variants optimized for speed/accuracy
+- **CPU Optimized** - Real-time inference without GPU requirements  
+- **ML Algorithms** - K-means clustering, PCA, Random Forest, SVM, Linear Regression
+- **Computer Vision Pipeline** - Object tracking, confidence scoring, detection analytics
 
 ### 🎨 **Professional Interface**
 - **Dark Theme** - Easy on the eyes for long sessions
@@ -212,17 +212,17 @@ OmniDetector/
 
 ---
 
-## 🎯 Object Detection Capabilities
+## 🎯 YOLO Detection Capabilities
 
-### 📋 **Supported Object Classes (80+)**
-- **👥 People**: Person detection and tracking
-- **🚗 Vehicles**: Car, truck, bus, motorcycle, bicycle
-- **🐕 Animals**: Dog, cat, bird, horse, cow, sheep
-- **📱 Electronics**: Phone, laptop, TV, mouse, keyboard
-- **🏠 Household**: Chair, table, bed, sofa, refrigerator
-- **🍎 Food**: Apple, banana, sandwich, pizza, cake
-- **⚽ Sports**: Ball, frisbee, ski, surfboard, tennis racket
-- **And many more...**
+### 📋 **COCO Dataset Classes (80 Objects)**
+- **👥 People**: Person detection with bounding boxes
+- **🚗 Vehicles**: Car, truck, bus, motorcycle, bicycle recognition
+- **🐕 Animals**: Dog, cat, bird, horse, cow, sheep classification  
+- **📱 Electronics**: Phone, laptop, TV, mouse, keyboard detection
+- **🏠 Household**: Chair, table, bed, sofa, refrigerator identification
+- **🍎 Food**: Apple, banana, sandwich, pizza, cake recognition
+- **⚽ Sports**: Ball, frisbee, ski, surfboard, tennis racket detection
+- **Complete COCO-80 support** with confidence scoring
 
 ### ⚙️ **Customization Options**
 - **Confidence Threshold**: 0.0 - 1.0 (default: 0.25)
@@ -312,7 +312,7 @@ Need help? We've got you covered:
 - 📖 **Documentation**: Check this README
 - 🐛 **Bug Reports**: [Open an issue](../../issues)
 - 💬 **Discussions**: [GitHub Discussions](../../discussions)
-- 📧 **Email**: support@omnidetector.ai
+- 📧 **Contact**: GitHub Issues or Discussions
 
 ---
 
