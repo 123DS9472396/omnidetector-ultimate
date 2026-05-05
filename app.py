@@ -24,7 +24,12 @@ License: MIT
 import streamlit as st  # Core web app framework
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration  # For real-time webcam
 import av  # Audio video processing
-import cv2  # Computer vision library
+import os
+try:
+    import cv2  # Computer vision library
+except ImportError:
+    os.system("pip uninstall -y opencv-python")
+    import cv2
 import numpy as np  # Numerical computations
 import pandas as pd  # Data manipulation
 import plotly.express as px  # Interactive charts
