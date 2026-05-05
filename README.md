@@ -1,3 +1,46 @@
+# Project Tech Stack, ML/DL Algorithms, and Workflow
+
+## Tech Stack
+- **Language:** Python 3.x
+- **Web Framework:** Streamlit
+- **Computer Vision:** OpenCV, PIL
+- **Deep Learning:** Ultralytics YOLO (v8, v9, v10)
+- **Machine Learning:** scikit-learn (RandomForest, SVM, KMeans, DBSCAN, PCA, MLP, etc.)
+- **Visualization:** Plotly, pandas
+- **Other:** streamlit-webrtc, numpy, threading, logging
+
+## ML & Deep Learning Algorithms Used
+- **Object Detection:**
+    - YOLOv8, YOLOv9, YOLOv10 (Ultralytics, pre-trained weights)
+- **Clustering:**
+    - KMeans, DBSCAN (scikit-learn)
+- **Dimensionality Reduction:**
+    - PCA, FastICA (scikit-learn)
+- **Classification/Regression:**
+    - RandomForestClassifier, GradientBoostingClassifier, IsolationForest, OneClassSVM, LinearRegression, MLPClassifier (scikit-learn)
+- **Metrics:**
+    - accuracy_score, mean_squared_error, f1_score, precision_score, recall_score
+
+## Project Workflow
+1. **Input:** User uploads image/video or uses webcam.
+2. **Object Detection:**
+     - Pre-trained YOLO models (no custom training) are loaded and used for inference.
+     - Models supported: YOLOv8, YOLOv9, YOLOv10 (weights included or auto-downloaded).
+3. **Analytics & Visualization:**
+     - Detected objects are visualized with bounding boxes and stats.
+     - Additional analytics (clustering, anomaly detection, etc.) are performed using scikit-learn models trained on-the-fly for the current session/data (not for object detection itself).
+4. **Export:** Results and analytics can be exported as CSV/images.
+
+## Notes on Training and Weights
+- **No custom YOLO training is performed in this project.**
+- All object detection uses pre-trained YOLO weights (no GPU required for inference).
+- scikit-learn models are trained on-the-fly for analytics only (CPU-friendly, no deep learning training).
+
+## Project Type
+- This is a real-time object detection and analytics dashboard using pre-trained models (supervised learning, inference only for YOLO; some unsupervised/ML analytics for stats).
+
+---
+If you need to run custom training or generate new weights, you will need a GPU and modify the code to support YOLO training.
 # 🚀 OmniDetector Ultimate v3.0
 
 <div align="center">

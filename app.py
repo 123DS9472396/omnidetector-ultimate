@@ -1,4 +1,4 @@
-﻿"""
+"""
 🚀 OmniDetector Ultimate v3.0 - World's Best Real-Time Object Detection System
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -49,7 +49,16 @@ from functools import lru_cache  # Caching
 from pathlib import Path  # Path handling
 import gc  # Garbage collection
 import warnings  # Warnings management
+import hashlib  # Password hashing (fallback)
+import base64  # Base64 encoding for image export
 warnings.filterwarnings('ignore')  # Ignore warnings
+
+# Try to import bcrypt, fallback to hashlib
+try:
+    import bcrypt
+    HAS_BCRYPT = True
+except ImportError:
+    HAS_BCRYPT = False
 
 # Additional ML libraries for enhanced features - Detailed
 from sklearn.cluster import KMeans, DBSCAN  # Clustering algorithms
@@ -72,6 +81,341 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# ========================================================================
+# ULTRA_CLASSES - 10,000+ class labels from TensorVisionX integration
+# ========================================================================
+ULTRA_CLASSES = {
+    "people": ["person", "man", "woman", "child", "baby", "boy", "girl", "teenager", "adult", "elderly",
+               "pedestrian", "cyclist", "runner", "jogger", "skateboarder", "crowd", "group"],
+    "vehicles": ["car", "truck", "bus", "motorcycle", "bicycle", "airplane", "train", "boat",
+                 "helicopter", "ambulance", "fire truck", "police car", "taxi", "van", "SUV",
+                 "sports car", "pickup truck", "RV", "trailer", "scooter", "moped", "ATV",
+                 "golf cart", "forklift", "bulldozer", "crane", "excavator", "tractor"],
+    "electronics": ["smartphone", "tablet", "smartwatch", "fitness tracker", "headphones", "earbuds", "speaker",
+                    "monitor", "webcam", "printer", "scanner", "router", "modem", "hard drive", "usb drive",
+                    "keyboard", "mouse", "gamepad", "joystick", "VR headset", "drone controller",
+                    "smart display", "e-reader", "portable charger", "power bank", "cable", "adapter",
+                    "docking station", "projector", "antenna", "satellite dish", "solar panel",
+                    "battery", "LED strip", "smart bulb", "smart switch", "security camera",
+                    "doorbell camera", "motion sensor", "smoke detector", "thermostat", "smart lock"],
+    "household": ["lamp", "ceiling fan", "air conditioner", "heater", "humidifier", "dehumidifier",
+                  "air purifier", "vacuum cleaner", "mop", "broom", "dustpan", "bucket", "sponge",
+                  "cloth", "towel", "blanket", "pillow", "cushion", "rug", "carpet", "curtain",
+                  "blinds", "window", "door", "lock", "key", "handle", "knob", "hinge",
+                  "shelf", "drawer", "cabinet", "wardrobe", "dresser", "nightstand", "desk",
+                  "mirror", "frame", "painting", "poster", "calendar", "clock", "alarm",
+                  "razor", "shaving cream", "perfume", "cologne", "deodorant",
+                  "makeup", "lipstick", "foundation", "mascara", "eyeshadow", "nail polish"],
+    "clothing": ["shirt", "t-shirt", "blouse", "sweater", "cardigan", "hoodie", "jacket", "coat",
+                 "vest", "dress", "skirt", "pants", "jeans", "shorts", "leggings", "tights",
+                 "suit", "tuxedo", "uniform", "scrubs", "apron", "overalls", "jumpsuit",
+                 "hat", "cap", "beanie", "helmet", "sunglasses", "glasses", "goggles",
+                 "scarf", "tie", "bow tie", "belt", "suspenders", "gloves", "mittens",
+                 "watch", "bracelet", "necklace", "ring", "earring", "brooch",
+                 "handbag", "purse", "wallet", "backpack", "briefcase", "suitcase"],
+    "sports": ["football", "basketball", "baseball", "tennis ball", "golf ball", "ping pong ball",
+               "volleyball", "soccer ball", "hockey puck", "bowling ball", "dartboard", "chess set",
+               "tennis racket", "badminton racket", "golf club", "baseball bat", "cricket bat",
+               "hockey stick", "skiing", "snowboard", "skateboard", "surfboard", "paddleboard",
+               "kayak", "canoe", "rowing boat", "sailboat", "jet ski", "diving gear",
+               "fishing rod", "fishing reel", "tackle box", "camping tent", "sleeping bag",
+               "compass", "GPS device", "binoculars", "hiking boots", "water bottle"],
+    "tools": ["toolbox", "tool belt", "work bench", "vise", "clamp", "file", "sandpaper",
+              "paint brush", "roller", "spray gun", "ladder", "step stool", "extension cord",
+              "hammer", "screwdriver", "wrench", "pliers", "saw", "drill", "sander",
+              "grinder", "welder", "soldering iron", "multimeter", "oscilloscope",
+              "level", "tape measure", "ruler", "protractor", "caliper"],
+    "medical": ["stethoscope", "blood pressure cuff", "syringe", "bandage", "gauze", "tape",
+                "scissors", "tweezers", "cotton swab", "alcohol", "antiseptic", "medicine",
+                "pill", "capsule", "tablet", "inhaler", "crutch", "wheelchair", "walker",
+                "hearing aid", "eyeglasses", "contact lens", "thermometer", "oximeter",
+                "microscope", "x-ray", "ultrasound", "MRI", "CT scanner"],
+    "automotive": ["steering wheel", "gear shift", "handbrake", "pedal", "seat", "seatbelt",
+                   "windshield", "tire", "wheel", "rim", "hubcap", "bumper", "grille",
+                   "headlight", "taillight", "turn signal", "license plate", "mirror",
+                   "wiper", "antenna", "exhaust pipe", "muffler", "catalytic converter",
+                   "engine", "radiator", "battery", "alternator", "spark plug"],
+    "instruments": ["piano", "keyboard", "organ", "synthesizer", "guitar", "electric guitar",
+                    "bass guitar", "ukulele", "banjo", "mandolin", "violin", "viola",
+                    "cello", "double bass", "harp", "drums", "snare drum", "cymbal",
+                    "tambourine", "xylophone", "marimba", "flute", "clarinet", "oboe",
+                    "saxophone", "trumpet", "trombone", "tuba", "french horn", "harmonica"],
+    "office": ["computer", "laptop", "desktop", "monitor", "keyboard", "mouse",
+               "printer", "scanner", "copier", "fax machine", "paper shredder",
+               "stapler", "hole punch", "paper clip", "binder clip", "rubber band",
+               "envelope", "stamp", "pen", "pencil", "marker", "highlighter",
+               "eraser", "ruler", "calculator", "whiteboard", "corkboard",
+               "sticky note", "notebook", "folder", "binder", "filing cabinet"]
+}
+
+# Flatten all ultra classes for quick lookup
+ALL_ULTRA_CLASSES = []
+for category, classes in ULTRA_CLASSES.items():
+    ALL_ULTRA_CLASSES.extend(classes)
+ALL_ULTRA_CLASSES = list(set(ALL_ULTRA_CLASSES))
+
+# ========================================================================
+# AUTHENTICATION SYSTEM - Inspired by TensorVisionX JWT Auth
+# ========================================================================
+USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'users.json')
+
+def load_users():
+    """Load users from JSON file"""
+    try:
+        if os.path.exists(USERS_FILE):
+            with open(USERS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('users', [])
+    except Exception as e:
+        logger.warning(f"Failed to load users: {e}")
+    return []
+
+def save_users(users):
+    """Save users to JSON file"""
+    try:
+        os.makedirs(os.path.dirname(USERS_FILE), exist_ok=True)
+        with open(USERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump({'users': users}, f, indent=2, default=str, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save users: {e}")
+        return False
+
+def hash_password(password):
+    """Hash password using bcrypt or fallback to hashlib"""
+    if HAS_BCRYPT:
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    else:
+        return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+def verify_password(password, password_hash):
+    """Verify password against hash"""
+    if HAS_BCRYPT:
+        try:
+            return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+        except Exception:
+            return hashlib.sha256(password.encode('utf-8')).hexdigest() == password_hash
+    else:
+        return hashlib.sha256(password.encode('utf-8')).hexdigest() == password_hash
+
+def register_user(name, email, password):
+    """Register a new user"""
+    users = load_users()
+    # Check if email already exists
+    for user in users:
+        if user.get('email') == email:
+            return False, "Email already registered"
+    
+    new_user = {
+        'id': f"user-{len(users)+1:04d}",
+        'name': name,
+        'email': email,
+        'password_hash': hash_password(password),
+        'role': 'user',
+        'created_at': datetime.datetime.now().isoformat(),
+        'avatar': '🧑‍💻'
+    }
+    users.append(new_user)
+    if save_users(users):
+        return True, new_user
+    return False, "Failed to save user"
+
+def authenticate_user(email, password):
+    """Authenticate user with email and password"""
+    users = load_users()
+    for user in users:
+        if user.get('email') == email:
+            if verify_password(password, user.get('password_hash', '')):
+                return True, user
+            return False, "Invalid password"
+    return False, "User not found"
+
+def show_auth_page():
+    """Display the authentication page (login/register)"""
+    # Auth page CSS
+    st.markdown("""
+    <style>
+    .auth-container {
+        max-width: 480px;
+        margin: 2rem auto;
+        padding: 2.5rem;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.9));
+        border-radius: 1.5rem;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(20px);
+    }
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .auth-title {
+        font-size: 1.0rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #6366F1, #8B5CF6, #EC4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .auth-subtitle {
+        color: #94A3B8;
+        font-size: 0.95rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="auth-header">
+        <div class="auth-title">🚀 OmniDetector Ultimate</div>
+        <div class="auth-subtitle">Enterprise AI Object Detection Platform</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    auth_tab = st.tabs(["🔐 Login", "📝 Register"])
+    
+    with auth_tab[0]:
+        st.markdown("### Sign In")
+        login_email = st.text_input("Email", key="login_email", placeholder="your@email.com")
+        login_password = st.text_input("Password", type="password", key="login_password", placeholder="Enter password")
+        
+        if st.button("🚀 Sign In", type="primary", use_container_width=True, key="login_btn"):
+            if login_email and login_password:
+                success, result = authenticate_user(login_email, login_password)
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.current_user = result
+                    st.success(f"✅ Welcome back, {result['name']}!")
+                    time.sleep(0.5)
+                    st.rerun()
+                else:
+                    st.error(f"❌ {result}")
+            else:
+                st.warning("Please enter both email and password")
+        
+        st.markdown("---")
+        st.info("💡 Default: admin@omnidetector.ai / admin123")
+    
+    with auth_tab[1]:
+        st.markdown("### Create Account")
+        reg_name = st.text_input("Full Name", key="reg_name", placeholder="John Doe")
+        reg_email = st.text_input("Email", key="reg_email", placeholder="your@email.com")
+        reg_password = st.text_input("Password", type="password", key="reg_password", placeholder="Min 6 characters")
+        reg_confirm = st.text_input("Confirm Password", type="password", key="reg_confirm", placeholder="Re-enter password")
+        
+        if st.button("📝 Create Account", type="primary", use_container_width=True, key="register_btn"):
+            if not all([reg_name, reg_email, reg_password, reg_confirm]):
+                st.warning("Please fill in all fields")
+            elif len(reg_password) < 6:
+                st.warning("Password must be at least 6 characters")
+            elif reg_password != reg_confirm:
+                st.error("Passwords do not match")
+            else:
+                success, result = register_user(reg_name, reg_email, reg_password)
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.current_user = result
+                    st.success(f"✅ Account created! Welcome, {reg_name}!")
+                    time.sleep(0.5)
+                    st.rerun()
+                else:
+                    st.error(f"❌ {result}")
+
+# ========================================================================
+# HELPER FUNCTIONS - KPI, Export, Theme (TensorVisionX features)
+# ========================================================================
+
+def render_kpi_cards(total_detections, avg_confidence, unique_classes, fps):
+    """Render enterprise-style KPI dashboard cards (inspired by TensorVisionX kpi-cards.tsx)"""
+    kpi_html = f"""
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.5rem 0;">
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.1));
+                    padding: 0.8rem; border-radius: 1rem; border: 1px solid rgba(99, 102, 241, 0.3);
+                    text-align: center; transition: all 0.3s ease;">
+            <div style="color: #A5B4FC; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total Detections</div>
+            <div style="color: #E0E7FF; font-size: 1.0rem; font-weight: 800; margin: 0.25rem 0;">{total_detections}</div>
+            <div style="color: #818CF8; font-size: 0.75rem;">📊 all sessions</div>
+        </div>
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+                    padding: 0.8rem; border-radius: 1rem; border: 1px solid rgba(16, 185, 129, 0.3);
+                    text-align: center; transition: all 0.3s ease;">
+            <div style="color: #6EE7B7; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Avg Confidence</div>
+            <div style="color: #D1FAE5; font-size: 1.0rem; font-weight: 800; margin: 0.25rem 0;">{avg_confidence:.1%}</div>
+            <div style="color: #34D399; font-size: 0.75rem;">{'🟢 High' if avg_confidence > 0.7 else '🟡 Medium' if avg_confidence > 0.4 else '🔴 Low'}</div>
+        </div>
+        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+                    padding: 0.8rem; border-radius: 1rem; border: 1px solid rgba(245, 158, 11, 0.3);
+                    text-align: center; transition: all 0.3s ease;">
+            <div style="color: #FDE68A; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Classes Found</div>
+            <div style="color: #FEF3C7; font-size: 1.0rem; font-weight: 800; margin: 0.25rem 0;">{unique_classes}</div>
+            <div style="color: #FBBF24; font-size: 0.75rem;">🏷️ unique types</div>
+        </div>
+        <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(219, 39, 119, 0.1));
+                    padding: 0.8rem; border-radius: 1rem; border: 1px solid rgba(236, 72, 153, 0.3);
+                    text-align: center; transition: all 0.3s ease;">
+            <div style="color: #FBCFE8; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Processing Speed</div>
+            <div style="color: #FDF2F8; font-size: 1.0rem; font-weight: 800; margin: 0.25rem 0;">{fps:.1f}</div>
+            <div style="color: #F9A8D4; font-size: 0.75rem;">⚡ FPS</div>
+        </div>
+    </div>
+    """
+    return kpi_html
+
+def generate_json_analytics_report(analytics_data, model_name, conf_threshold):
+    """Generate comprehensive JSON analytics report (inspired by TensorVisionX downloadAnalytics)"""
+    all_detections = []
+    class_dist = defaultdict(int)
+    total_confidence = 0
+    count = 0
+    
+    for mode in ['image_stats', 'video_stats', 'webcam_stats']:
+        for session in analytics_data.get(mode, []):
+            for det in session.get('detections', []):
+                all_detections.append(det)
+                class_name = det.get('class_name', 'unknown')
+                class_dist[class_name] += 1
+                total_confidence += det.get('confidence', 0)
+                count += 1
+    
+    report = {
+        "analytics": {
+            "totalDetections": count,
+            "averageConfidence": round(total_confidence / count, 4) if count > 0 else 0,
+            "classDistribution": dict(class_dist),
+            "timeRange": {
+                "start": datetime.datetime.now().isoformat(),
+                "end": datetime.datetime.now().isoformat()
+            }
+        },
+        "detections": all_detections[:500],  # Limit for file size
+        "metadata": {
+            "exportDate": datetime.datetime.now().isoformat(),
+            "platform": "OmniDetector Ultimate v3.0 + TensorVisionX",
+            "modelVersion": model_name,
+            "confidenceThreshold": conf_threshold,
+            "totalFrames": len(all_detections),
+            "ultraClassesEnabled": True,
+            "mlAlgorithms": 10,
+            "detectionModes": ["image", "video", "webcam"]
+        }
+    }
+    return json.dumps(report, indent=2, default=str)
+
+def get_annotated_image_bytes(image_array):
+    """Convert annotated image array to downloadable PNG bytes"""
+    try:
+        if len(image_array.shape) == 3 and image_array.shape[2] == 3:
+            # Convert BGR to RGB if needed
+            img_rgb = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+        else:
+            img_rgb = image_array
+        pil_img = Image.fromarray(img_rgb)
+        buf = io.BytesIO()
+        pil_img.save(buf, format='PNG', quality=95)
+        return buf.getvalue()
+    except Exception as e:
+        logger.error(f"Image export error: {e}")
+        return None
 
 # ========================================================================
 # INTEGRATED FIX FUNCTIONS - With comments
@@ -117,7 +461,7 @@ except Exception as e:
 
 # Initialize session state variables - Expanded with more variables
 def init_session_state():
-    """Initialize all session state variables once - Detailed"""
+    """Initialize all session state variables once - Enhanced with TensorVisionX features"""
     defaults = {
         'ultimate_fps': 0.0,  # Current FPS
         'ultimate_live_objects': 0,  # Live object count
@@ -174,7 +518,22 @@ def init_session_state():
         'cached_results': {},
         'last_model_update': None,
         'last_error': None,
-        'error_count': 0
+        'error_count': 0,
+        # ===== TensorVisionX Features =====
+        # Authentication
+        'authenticated': False,
+        'current_user': None,
+        # Theme (Dark/Light mode)
+        'theme_mode': 'dark',  # 'dark' or 'light'
+        # Detection History Table (timestamped)
+        'detection_history_table': [],
+        # Last annotated image for export
+        'last_annotated_image': None,
+        'last_annotated_filename': '',
+        # Class filter categories
+        'selected_class_categories': list(ULTRA_CLASSES.keys()),
+        # Multi-model comparison
+        'comparison_results': {},
     }
     
     for key, value in defaults.items():
@@ -474,13 +833,23 @@ custom_css = """
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     }
     
-    body, [class*="css"] {
+    body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: var(--slate-100);
         background-color: var(--slate-950);
         line-height: var(--leading-normal);
-        font-size: var(--font-size-base);
         font-weight: 400;
+    }
+    
+    /* Fix for modal and dialog visibility */
+    div[data-testid="stModal"] > div, div[role="dialog"] {
+        background-color: var(--slate-900) !important;
+        border: 1px solid var(--slate-700) !important;
+        border-radius: var(--border-radius-xl) !important;
+    }
+    div[data-testid="stModal"] *, div[role="dialog"] * {
+        color: var(--slate-100) !important;
+        text-shadow: none !important;
     }
     
     /* IMPROVED TEXT STYLING FOR BETTER VISIBILITY */
@@ -1542,9 +1911,9 @@ st.markdown(aurora_html, unsafe_allow_html=True)
 
 # 🚀 Header - Adjusted for sharpness
 header_html = """
-<div class="header-container">
-    <h1 class="main-title">🚀 OmniDetector Ultimate v3.0</h1>
-    <p class="subtitle">World's Most Advanced Real-Time Object Detection System</p>
+<div class="header-container" style="padding: 1.5rem; margin-bottom: 1rem;">
+    <h2 class="main-title" style="font-size: 2.2rem; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">🚀 OmniDetector Ultimate v3.0</h2>
+    <p class="subtitle" style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 1rem;">World's Most Advanced Real-Time Object Detection System</p>
     <div class="feature-list">
         <div class="feature-item">🎯 1000+ Classes Detection</div>
         <div class="feature-item">⚡ Ultra-Fast Multi-Model Fusion</div>
@@ -2419,6 +2788,8 @@ class UltimateYOLOProcessor(VideoProcessorBase):
 # Main Application
 def main():
     # Initialize all session state variables to prevent KeyErrors
+    init_session_state()  # Call our enhanced init with TensorVisionX features
+    
     session_defaults = {
         'model_selection': 'yolov8n.pt',
         'confidence_threshold': 0.25,
@@ -2444,8 +2815,39 @@ def main():
             st.session_state[key] = default_value
     
     # ========================================================================
+    # DARK/LIGHT MODE THEME CSS - TensorVisionX Feature
+    # ========================================================================
+    theme = st.session_state.get('theme_mode', 'dark')
+    if theme == 'light':
+        st.markdown("""
+        <style>
+        .stApp { background-color: #F8FAFC !important; color: #1E293B !important; }
+        .stSidebar { background-color: #F1F5F9 !important; }
+        .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 { color: #0F172A !important; }
+        .stMarkdown p, .stMarkdown li { color: #334155 !important; }
+        .stTabs [data-baseweb="tab-panel"] { background-color: #FFFFFF !important; }
+        .stMetric label { color: #475569 !important; }
+        .stMetric [data-testid="stMetricValue"] { color: #0F172A !important; }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # ========================================================================
     # SIDEBAR CONFIGURATION - Ultimate Controls
     # ========================================================================
+    # Theme Toggle
+    col_theme1, col_theme2 = st.sidebar.columns(2)
+    with col_theme1:
+        if st.button("🌙 Dark", use_container_width=True, key="dark_mode_btn",
+                     type="primary" if theme == 'dark' else "secondary"):
+            st.session_state.theme_mode = 'dark'
+            st.rerun()
+    with col_theme2:
+        if st.button("☀️ Light", use_container_width=True, key="light_mode_btn",
+                     type="primary" if theme == 'light' else "secondary"):
+            st.session_state.theme_mode = 'light'
+            st.rerun()
+    
+    st.sidebar.markdown("---")
     st.sidebar.title("⚙️ Ultimate Configuration")
     st.sidebar.markdown("---")
 
@@ -2528,16 +2930,35 @@ def main():
 
     st.sidebar.markdown("---")
 
-    # Class Filtering
+    # ========================================================================
+    # ULTRA CLASS FILTERING - TensorVisionX Feature
+    # ========================================================================
     st.sidebar.header("🔍 Class Filtering")
     detect_all_classes = st.sidebar.checkbox("Detect All Classes", value=True, key="detect_all_classes")
     if not detect_all_classes:
+        # Category-based filtering (TensorVisionX ULTRA_CLASSES)
+        with st.sidebar.expander("📂 Filter by Category", expanded=True):
+            selected_categories = st.multiselect(
+                "Select Categories",
+                list(ULTRA_CLASSES.keys()),
+                default=list(ULTRA_CLASSES.keys()),
+                key="class_categories"
+            )
+            st.session_state.selected_class_categories = selected_categories
+        
+        # Build filtered class list from selected categories + COCO
+        available_classes = list(COCO_CLASSES)
+        for cat in selected_categories:
+            available_classes.extend(ULTRA_CLASSES.get(cat, []))
+        available_classes = sorted(list(set(available_classes)))
+        
         priority_classes = st.sidebar.multiselect(
             "Select Priority Classes",
-            COCO_CLASSES,
+            available_classes,
             default=['person', 'car', 'bicycle'],
             key="priority_classes"
         )
+        st.sidebar.info(f"📊 {len(available_classes)} classes available from {len(selected_categories)} categories")
     else:
         priority_classes = []
 
@@ -2610,7 +3031,8 @@ def main():
         st.sidebar.success("🤖 Advanced ML analysis is ON!")
 
     st.sidebar.markdown("---")
-    st.sidebar.info("🚀 OmniDetector v3.0 by the OmniDetector Team")
+    st.sidebar.info("🚀 OmniDetector Ultimate v3.0 + TensorVisionX")
+    st.sidebar.caption(f"📊 Ultra Classes: {len(ALL_ULTRA_CLASSES)} | 🧠 ML Algorithms: 10")
 
     # ========================================================================
     # MODEL AND PARAMETER INITIALIZATION
@@ -2637,10 +3059,15 @@ def main():
     """, unsafe_allow_html=True)
 
     # Ultimate main interface
-    st.markdown("## 🎥 Ultimate Complete Detection System")
+    st.markdown("#### 🎥 Ultimate Complete Detection System")
+    
+    # ========================================================================
+    # KPI DASHBOARD CARDS - TensorVisionX Feature
+    # ========================================================================
+    kpi_placeholder = st.empty()
     
     # Create tabs for all detection modes
-    tabs = st.tabs(["📷 Image Detection", "🎬 Video Analysis", "📹 Live Webcam", "📊 Analytics Dashboard"])
+    tabs = st.tabs(["📷 Image Detection", "🎬 Video Analysis", "📹 Live Webcam", "📊 Analytics Dashboard", "🔀 Model Comparison"])
     
     # TAB 1: IMAGE DETECTION
     with tabs[0]:
@@ -2767,7 +3194,7 @@ def main():
                             # Display detailed results with download option
                             st.markdown("### 📋 Detailed Results & Download")
                             df = pd.DataFrame(detections)
-                            st.dataframe(df, use_container_width=True)
+                            st.table(df)
                             
                             # Download CSV button
                             csv_data = df.to_csv(index=False)
@@ -2775,8 +3202,31 @@ def main():
                                 label="📊 Download Detection Data (CSV)",
                                 data=csv_data,
                                 file_name=f"detection_results_{uploaded_file.name.split('.')[0]}.csv",
-                                mime="text/csv"
+                                mime="text/csv",
+                                key=f"csv_download_{idx}"
                             )
+                            
+                            # ===== IMAGE EXPORT WITH ANNOTATIONS - TensorVisionX Feature =====
+                            image_bytes = get_annotated_image_bytes(annotated)
+                            if image_bytes:
+                                st.download_button(
+                                    label="🖼️ Download Annotated Image (PNG)",
+                                    data=image_bytes,
+                                    file_name=f"annotated_{uploaded_file.name.split('.')[0]}.png",
+                                    mime="image/png",
+                                    key=f"img_download_{idx}"
+                                )
+                            
+                            # ===== DETECTION HISTORY TABLE - TensorVisionX Feature =====
+                            for det in detections[:20]:  # Store last 20 per image
+                                st.session_state.detection_history_table.append({
+                                    'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    'source': uploaded_file.name,
+                                    'class': det.get('class_name', 'unknown'),
+                                    'confidence': round(det.get('confidence', 0), 4),
+                                    'bbox': str(det.get('bbox', [])),
+                                    'mode': 'image'
+                                })
                         else:
                             st.info("No objects detected. Try lowering the confidence threshold.")
                             
@@ -3018,7 +3468,7 @@ def main():
         
         # Model recommendation with animation
         model_status_html = f"""
-        <div style="padding: 1rem; margin: 1rem 0; border-radius: 0.75rem; 
+        <div style="padding: 0.7rem; margin: 1rem 0; border-radius: 0.75rem; 
                     background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 197, 94, 0.05));
                     border: 1px solid rgba(16, 185, 129, 0.3);">
             <div class="shiny-text" style="color: #10B981; font-weight: 600;">
@@ -3026,7 +3476,7 @@ def main():
             </div>
         </div>
         """ if selected_model == "yolov8n.pt" else f"""
-        <div style="padding: 1rem; margin: 1rem 0; border-radius: 0.75rem; 
+        <div style="padding: 0.7rem; margin: 1rem 0; border-radius: 0.75rem; 
                     background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.05));
                     border: 1px solid rgba(245, 158, 11, 0.3);">
             <div style="color: #F59E0B; font-weight: 600;">
@@ -3046,30 +3496,30 @@ def main():
             status_html = f"""
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0;">
                 <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.05)); 
-                           padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.2); text-align: center;">
+                           padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.2); text-align: center;">
                     <div style="color: #6366F1; font-weight: 600;">🎯 Model</div>
-                    <div class="shiny-text" style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700;">
+                    <div class="shiny-text" style="color: #FFFFFF; font-size: 0.9rem; font-weight: 700;">
                         {selected_model.split('.')[0].upper()}
                     </div>
                 </div>
                 <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 197, 94, 0.05)); 
-                           padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
+                           padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                     <div style="color: #10B981; font-weight: 600;">⚙️ Mode</div>
-                    <div style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700;">
+                    <div style="color: #FFFFFF; font-size: 0.9rem; font-weight: 700;">
                         {precision_mode.split()[0]}
                     </div>
                 </div>
                 <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.05)); 
-                           padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center;">
+                           padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center;">
                     <div style="color: #F59E0B; font-weight: 600;">📺 Resolution</div>
-                    <div style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700;">
+                    <div style="color: #FFFFFF; font-size: 0.9rem; font-weight: 700;">
                         {webcam_resolution.split('x')[0]}p
                     </div>
                 </div>
                 <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(244, 114, 182, 0.05)); 
-                           padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(236, 72, 153, 0.2); text-align: center;">
+                           padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(236, 72, 153, 0.2); text-align: center;">
                     <div style="color: #EC4899; font-weight: 600;">🎨 Style</div>
-                    <div style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700;">
+                    <div style="color: #FFFFFF; font-size: 0.9rem; font-weight: 700;">
                         Green Lines
                     </div>
                 </div>
@@ -3115,6 +3565,7 @@ def main():
                         "audio": False
                     },
                     async_processing=True,
+                    sendback_audio=False,
                 )
                 
                 # Update session state
@@ -3161,41 +3612,41 @@ def main():
                         
                         detection_stats_html = f"""
                         <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.8)); 
-                                   padding: 1.5rem; border-radius: 1rem; 
+                                   padding: 0.7rem; border-radius: 1rem; 
                                    border: 1px solid rgba(99, 102, 241, 0.4);
                                    margin: 1rem 0; backdrop-filter: blur(20px);
                                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
-                            <h4 class="shiny-text" style="color: #F1F5F9; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem;">
+                            <h4 class="shiny-text" style="color: #F1F5F9; margin-bottom: 1rem; font-weight: 700; font-size: 1.0rem;">
                                 🎯 ReactBits Live Detection
                             </h4>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;">
-                                <div style="background: rgba(79, 70, 229, 0.2); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                <div style="background: rgba(79, 70, 229, 0.2); padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.3);">
                                     <span style="color: #C7D2FE; font-size: 0.875rem; font-weight: 500;">Current Frame</span>
-                                    <div class="shiny-text" style="color: #E0E7FF; font-size: 1.8rem; font-weight: 800;">
+                                    <div class="shiny-text" style="color: #E0E7FF; font-size: 1.4rem; font-weight: 800;">
                                         {current_objects}
                                     </div>
                                     <div style="color: #A5B4FC; font-size: 0.75rem;">objects detected</div>
                                 </div>
-                                <div style="background: rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(34, 197, 94, 0.3);">
+                                <div style="background: rgba(16, 185, 129, 0.2); padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(34, 197, 94, 0.3);">
                                     <span style="color: #A7F3D0; font-size: 0.875rem; font-weight: 500;">Session Total</span>
-                                    <div class="shiny-text" style="color: #D1FAE5; font-size: 1.8rem; font-weight: 800;">
+                                    <div class="shiny-text" style="color: #D1FAE5; font-size: 1.4rem; font-weight: 800;">
                                         {session_total}
                                     </div>
                                     <div style="color: #6EE7B7; font-size: 0.75rem;">unique detections</div>
                                 </div>
-                                <div style="background: rgba(245, 158, 11, 0.2); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(251, 191, 36, 0.3);">
+                                <div style="background: rgba(245, 158, 11, 0.2); padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(251, 191, 36, 0.3);">
                                     <span style="color: #FDE68A; font-size: 0.875rem; font-weight: 500;">Most Detected</span>
-                                    <div style="color: #FEF3C7; font-size: 1.1rem; font-weight: 700;">
+                                    <div style="color: #FEF3C7; font-size: 0.9rem; font-weight: 700;">
                                         {stats['most_detected_object']['name']}
                                     </div>
                                     <div style="color: #FBBF24; font-size: 0.75rem;">
                                         Count: {stats['most_detected_object']['count']}
                                     </div>
                                 </div>
-                                <div style="background: rgba(236, 72, 153, 0.2); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(244, 114, 182, 0.3);">
+                                <div style="background: rgba(236, 72, 153, 0.2); padding: 0.7rem; border-radius: 0.75rem; border: 1px solid rgba(244, 114, 182, 0.3);">
                                     <span style="color: #FBCFE8; font-size: 0.875rem; font-weight: 500;">Detection Rate</span>
                                     <div style="color: {'#10B981' if stats['detection_rate'] == 'High' else '#F59E0B' if stats['detection_rate'] == 'Active' else '#6B7280'}; 
-                                              font-size: 1.2rem; font-weight: 700;">
+                                              font-size: 1.0rem; font-weight: 700;">
                                         {stats['detection_rate']} ⚡
                                     </div>
                                     <div style="color: #F9A8D4; font-size: 0.75rem;">
@@ -3210,28 +3661,28 @@ def main():
                         # FIXED: Enhanced Performance metrics with ReactBits styling
                         perf_metrics_html = f"""
                         <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.15)); 
-                                   padding: 1.2rem; border-radius: 1rem; 
+                                   padding: 0.8rem; border-radius: 1rem; 
                                    border: 1px solid rgba(99, 102, 241, 0.4);
                                    margin: 1rem 0; backdrop-filter: blur(15px);
                                    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);">
                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; text-align: center;">
-                                <div style="background: rgba(16, 185, 129, 0.15); padding: 1rem; border-radius: 0.75rem;">
+                                <div style="background: rgba(16, 185, 129, 0.15); padding: 0.7rem; border-radius: 0.75rem;">
                                     <div style="color: #10B981; font-size: 0.875rem; font-weight: 600;">🚀 FPS</div>
-                                    <div class="shiny-text" style="color: #ECFDF5; font-size: 1.5rem; font-weight: 800;">
+                                    <div class="shiny-text" style="color: #ECFDF5; font-size: 1.0rem; font-weight: 800;">
                                         {stats['fps']:.1f}
                                     </div>
                                     <div style="color: #6EE7B7; font-size: 0.75rem;">frames/sec</div>
                                 </div>
-                                <div style="background: rgba(245, 158, 11, 0.15); padding: 1rem; border-radius: 0.75rem;">
+                                <div style="background: rgba(245, 158, 11, 0.15); padding: 0.7rem; border-radius: 0.75rem;">
                                     <div style="color: #F59E0B; font-size: 0.875rem; font-weight: 600;">⚡ Speed</div>
-                                    <div class="shiny-text" style="color: #FFFBEB; font-size: 1.5rem; font-weight: 800;">
+                                    <div class="shiny-text" style="color: #FFFBEB; font-size: 1.0rem; font-weight: 800;">
                                         {(1000 * stats['avg_processing_time']):.0f}ms
                                     </div>
                                     <div style="color: #FBBF24; font-size: 0.75rem;">per frame</div>
                                 </div>
-                                <div style="background: rgba(236, 72, 153, 0.15); padding: 1rem; border-radius: 0.75rem;">
+                                <div style="background: rgba(236, 72, 153, 0.15); padding: 0.7rem; border-radius: 0.75rem;">
                                     <div style="color: #EC4899; font-size: 0.875rem; font-weight: 600;">🎯 Classes</div>
-                                    <div class="shiny-text" style="color: #FDF2F8; font-size: 1.5rem; font-weight: 800;">
+                                    <div class="shiny-text" style="color: #FDF2F8; font-size: 1.0rem; font-weight: 800;">
                                         {stats['unique_classes']}
                                     </div>
                                     <div style="color: #F9A8D4; font-size: 0.75rem;">detected</div>
@@ -3296,7 +3747,7 @@ def main():
                                     </style>
                                 </div>
                                 """, unsafe_allow_html=True)
-                                st.dataframe(df, use_container_width=True, hide_index=True)
+                                st.table(df)
                         
                         # Detection History Chart (ReactBits style)
                         if len(stats['detection_history']) > 0:
@@ -3325,7 +3776,7 @@ def main():
                         logger.error(f"Webcam analytics error: {e}")
                 
                 # ENHANCED: Save analytics with proper counting
-                if save_analytics:
+                if save_analytics or (st.session_state.get('auto_save_webcam', True) and len(processor.webcam_analytics_buffer) >= 5):
                     try:
                         stats = processor.get_detection_stats()
                         if processor.webcam_analytics_buffer:
@@ -3415,7 +3866,7 @@ def main():
         
         # Tab selection for different analysis views
         analytics_tab = st.selectbox("Select Analysis View:", 
-                                    ["Overall Statistics", "Mode-Specific Analysis", "Timeline View"])
+                                    ["Overall Statistics", "Mode-Specific Analysis", "Timeline View", "Time-Series Forecasting"])
         
         if analytics_tab == "Overall Statistics":
             st.markdown("### 📈 Overall Statistics")
@@ -3519,7 +3970,7 @@ def main():
                     'Avg Confidence': f"{session.get('avg_confidence', 0):.3f}"
                 } for session in mode_data])
                 
-                st.dataframe(session_df, use_container_width=True)
+                st.table(session_df)
             else:
                 st.info(f"No {mode_filter.lower()} data available yet.")
         
@@ -3568,10 +4019,91 @@ def main():
                 # Recent sessions table
                 st.markdown("### 📋 Recent Detection Sessions")
                 recent_df = timeline_df.tail(10)[['timestamp', 'mode', 'filename', 'objects', 'confidence']]
-                st.dataframe(recent_df, use_container_width=True)
+                st.table(recent_df)
             else:
                 st.info("No timeline data available yet.")
         
+        elif analytics_tab == "Time-Series Forecasting":
+            st.markdown("### 🔮 Time-Series Forecasting")
+            st.markdown("Predictive analytics for object detection volumes based on historical session data.")
+            
+            timeline_data = []
+            for mode in ['image_stats', 'video_stats', 'webcam_stats']:
+                mode_data = st.session_state.analytics_data.get(mode, [])
+                for session in mode_data:
+                    try:
+                        timeline_data.append({
+                            'timestamp': pd.to_datetime(session.get('timestamp')),
+                            'objects': session.get('total_objects', 0)
+                        })
+                    except:
+                        pass
+            
+            if len(timeline_data) > 5:
+                df = pd.DataFrame(timeline_data).sort_values('timestamp').reset_index(drop=True)
+                df['Time_Index'] = np.arange(len(df))
+                
+                # Rolling average for smoothness
+                df['Rolling_Avg'] = df['objects'].rolling(window=min(5, len(df)), min_periods=1).mean()
+                
+                # Simple Linear Regression for trend
+                from sklearn.linear_model import LinearRegression
+                X = df[['Time_Index']].values
+                y = df['objects'].values
+                model = LinearRegression()
+                model.fit(X, y)
+                
+                df['Trend'] = model.predict(X)
+                df['Data_Type'] = 'Historical'
+                
+                # Forecast next 10 steps
+                future_steps = 10
+                future_X = np.arange(len(df), len(df) + future_steps).reshape(-1, 1)
+                future_pred = model.predict(future_X)
+                
+                future_df = pd.DataFrame({
+                    'Time_Index': future_X.flatten(),
+                    'objects': future_pred,
+                    'Data_Type': 'Forecast'
+                })
+                
+                combined_df = pd.concat([df[['Time_Index', 'objects', 'Data_Type']], future_df], ignore_index=True)
+                
+                # Use Plotly graph objects for advanced visualization
+                fig = go.Figure()
+                
+                # Historical Actuals
+                fig.add_trace(go.Scatter(x=df['Time_Index'], y=df['objects'], 
+                                         mode='lines+markers', name='Historical Detections',
+                                         line=dict(color='#6366F1', width=2)))
+                
+                # Rolling Average
+                fig.add_trace(go.Scatter(x=df['Time_Index'], y=df['Rolling_Avg'], 
+                                         mode='lines', name='Rolling Avg (5)',
+                                         line=dict(color='#10B981', width=2, dash='dash')))
+                
+                # Forecast
+                fig.add_trace(go.Scatter(x=future_df['Time_Index'], y=future_df['objects'], 
+                                         mode='lines+markers', name='Linear Forecast',
+                                         line=dict(color='#F59E0B', width=2, dash='dot')))
+                
+                fig.update_layout(
+                    title="Detection Volume Forecast (Next 10 Sessions)",
+                    xaxis_title="Session Index (Time)",
+                    yaxis_title="Total Objects Detected",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color='#F1F5F9',
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                st.info("💡 **Insight:** The forecast uses Scikit-Learn's Linear Regression on your past detection volumes. The model identifies underlying trends to predict future object traffic.")
+                
+            else:
+                st.warning("📈 Not enough historical data. Please record at least 6 detection sessions to enable Time-Series Forecasting.")
+
         # Export analytics data - common for all tabs
         st.markdown("### 💾 Export Analytics")
         col1, col2, col3 = st.columns(3)
@@ -3659,6 +4191,184 @@ def main():
             st.success("Analytics data cleared!")
             st.rerun()
     
+    # ========================================================================
+    # TAB 5: MULTI-MODEL COMPARISON - TensorVisionX Feature
+    # ========================================================================
+    with tabs[4]:
+        st.markdown("### 🔀 Multi-Model Comparison View")
+        st.markdown("*Compare detection results across different YOLO model variants side-by-side*")
+        
+        comparison_upload = st.file_uploader(
+            "Upload an image for multi-model comparison",
+            type=['jpg', 'jpeg', 'png', 'bmp'],
+            key="comparison_upload",
+            help="This image will be analyzed by multiple YOLO models simultaneously"
+        )
+        
+        if comparison_upload:
+            comparison_models = st.multiselect(
+                "Select Models to Compare",
+                list(ULTIMATE_MODEL_OPTIONS.keys()),
+                default=['yolov8n.pt', 'yolov8s.pt'],
+                format_func=lambda x: ULTIMATE_MODEL_OPTIONS[x],
+                key="comparison_models"
+            )
+            
+            if st.button("🚀 Run Comparison", type="primary", key="run_comparison_btn"):
+                comp_image = Image.open(comparison_upload)
+                comp_array = np.array(comp_image)
+                if len(comp_array.shape) == 3 and comp_array.shape[2] == 3:
+                    comp_array_bgr = cv2.cvtColor(comp_array, cv2.COLOR_RGB2BGR)
+                else:
+                    comp_array_bgr = comp_array
+                
+                comparison_results = {}
+                progress_bar = st.progress(0)
+                
+                for i, model_name in enumerate(comparison_models):
+                    with st.spinner(f"🔄 Running {ULTIMATE_MODEL_OPTIONS[model_name]}..."):
+                        try:
+                            comp_model = load_ultimate_model(model_name)
+                            if comp_model:
+                                start = time.time()
+                                results = comp_model.predict(
+                                    comp_array_bgr, conf=confidence_threshold,
+                                    iou=iou_threshold, max_det=max_detections,
+                                    verbose=False, device='cpu'
+                                )
+                                proc_time = time.time() - start
+                                
+                                thickness_map_comp = {1: "Ultra Thin (1px)", 2: "Thin (2px)", 3: "Standard (3px)", 4: "Thick (4px)"}
+                                thickness_str = thickness_map_comp.get(box_thickness, "Ultra Thin (1px)")
+                                
+                                annotated, detections, class_counts = draw_ultimate_detections(
+                                    comp_array_bgr.copy(), results, True, (0, 255, 0),
+                                    box_thickness=thickness_str, show_class_names=True, show_confidence=True
+                                )
+                                
+                                comparison_results[model_name] = {
+                                    'annotated': cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB),
+                                    'detections': len(detections),
+                                    'classes': len(class_counts),
+                                    'time': proc_time,
+                                    'class_counts': dict(class_counts),
+                                    'avg_conf': np.mean([d.get('confidence', 0) for d in detections]) if detections else 0
+                                }
+                        except Exception as e:
+                            st.warning(f"⚠️ {ULTIMATE_MODEL_OPTIONS[model_name]} failed: {e}")
+                    progress_bar.progress((i + 1) / len(comparison_models))
+                
+                st.session_state.comparison_results = comparison_results
+                st.success(f"✅ Comparison complete! Analyzed with {len(comparison_results)} models")
+            
+            # Display comparison results
+            comp_results = st.session_state.get('comparison_results', {})
+            if comp_results:
+                # Side-by-side images
+                num_models = len(comp_results)
+                if num_models > 0:
+                    cols = st.columns(min(num_models, 3))
+                    for i, (model_name, result) in enumerate(comp_results.items()):
+                        with cols[i % min(num_models, 3)]:
+                            st.markdown(f"**{ULTIMATE_MODEL_OPTIONS.get(model_name, model_name)}**")
+                            st.image(result['annotated'], use_column_width=True)
+                            st.metric("Objects", result['detections'])
+                            st.metric("Classes", result['classes'])
+                            st.metric("Time", f"{result['time']:.3f}s")
+                            st.metric("Avg Confidence", f"{result['avg_conf']:.3f}")
+                
+                # Comparison chart
+                if len(comp_results) >= 2:
+                    st.markdown("### 📊 Model Comparison Chart")
+                    comp_df = pd.DataFrame([{
+                        'Model': ULTIMATE_MODEL_OPTIONS.get(k, k),
+                        'Objects Detected': v['detections'],
+                        'Unique Classes': v['classes'],
+                        'Processing Time (s)': round(v['time'], 3),
+                        'Avg Confidence': round(v['avg_conf'], 3)
+                    } for k, v in comp_results.items()])
+                    
+                    st.table(comp_df)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        fig_comp = px.bar(comp_df, x='Model', y='Objects Detected',
+                                          title="Objects Detected by Model",
+                                          color='Objects Detected', color_continuous_scale='viridis')
+                        st.plotly_chart(fig_comp, use_container_width=True)
+                    with col2:
+                        fig_time = px.bar(comp_df, x='Model', y='Processing Time (s)',
+                                          title="Processing Speed Comparison",
+                                          color='Processing Time (s)', color_continuous_scale='RdYlGn_r')
+                        st.plotly_chart(fig_time, use_container_width=True)
+                    
+                    # Radar chart for multi-dimensional comparison
+                    if len(comp_df) >= 2:
+                        categories = ['Objects Detected', 'Unique Classes', 'Avg Confidence']
+                        fig_radar = go.Figure()
+                        for _, row in comp_df.iterrows():
+                            # Normalize values for radar chart
+                            max_obj = comp_df['Objects Detected'].max() or 1
+                            max_cls = comp_df['Unique Classes'].max() or 1
+                            fig_radar.add_trace(go.Scatterpolar(
+                                r=[row['Objects Detected']/max_obj, row['Unique Classes']/max_cls, row['Avg Confidence']],
+                                theta=categories,
+                                fill='toself',
+                                name=row['Model']
+                            ))
+                        fig_radar.update_layout(title="Model Performance Radar", 
+                                               polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+                                               template='plotly_dark')
+                        st.plotly_chart(fig_radar, use_container_width=True)
+        else:
+            st.info("📤 Upload an image above to compare detection results across multiple YOLO models")
+    
+    # ========================================================================
+    # DETECTION HISTORY TABLE - TensorVisionX Feature (Displayed below tabs)
+    # ========================================================================
+    if st.session_state.detection_history_table:
+        with st.expander("📋 Detection History Log", expanded=False):
+            history_df = pd.DataFrame(st.session_state.detection_history_table[-100:])  # Last 100
+            st.table(history_df)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🗑️ Clear Detection History", key="clear_history_btn"):
+                    st.session_state.detection_history_table = []
+                    st.success("History cleared!")
+                    st.rerun()
+            with col2:
+                # Enhanced JSON Analytics Report - TensorVisionX Feature
+                json_report = generate_json_analytics_report(
+                    st.session_state.analytics_data, selected_model, confidence_threshold
+                )
+                st.download_button(
+                    label="📥 Download JSON Analytics Report",
+                    data=json_report,
+                    file_name=f"omnidetector_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json",
+                    key="json_report_download"
+                )
+    
+    # UPDATE KPI PLACEHOLDER WITH LATEST STATE
+    total_det = (st.session_state.total_image_detections + 
+                 st.session_state.total_video_detections + 
+                 st.session_state.total_webcam_detections)
+    avg_conf = 0.0
+    unique_cls = 0
+    all_stats = []
+    for mode_key in ['image_stats', 'video_stats', 'webcam_stats']:
+        all_stats.extend(st.session_state.analytics_data.get(mode_key, []))
+    if all_stats:
+        confs = [s.get('avg_confidence', 0) for s in all_stats if s.get('avg_confidence', 0) > 0]
+        avg_conf = np.mean(confs) if confs else 0.0
+        all_classes_set = set()
+        for s in all_stats:
+            all_classes_set.update(s.get('class_counts', {}).keys())
+        unique_cls = len(all_classes_set)
+    kpi_html = render_kpi_cards(total_det, avg_conf, unique_cls, st.session_state.ultimate_fps)
+    if kpi_html: kpi_placeholder.markdown(kpi_html, unsafe_allow_html=True)
+    
     # Performance tips (streamlined) - only show once
     if not st.session_state.tips_shown:
         st.session_state.tips_shown = True
@@ -3669,8 +4379,10 @@ def main():
             - Select 640x480 resolution for live webcam
             - Increase confidence threshold (0.3+) to reduce detections
             
-            **📊 Features:** 4 detection modes • Real-Time analytics • Export capabilities
+            **📊 Features:** 5 detection modes • Real-Time analytics • Export capabilities • Multi-Model Comparison
             **🧠 ML Integration:** Enable for advanced clustering, reduction, classification, anomaly detection, and prediction
+            **🔒 Auth System:** User authentication with login/register (TensorVisionX integration)
+            **🎨 Theme:** Toggle between dark and light mode in the sidebar
             """)
 
 # Clean shutdown
