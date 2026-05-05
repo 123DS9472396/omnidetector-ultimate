@@ -2899,7 +2899,7 @@ def main():
         help="Intersection over Union threshold for non-maximum suppression."
     )
     max_detections = st.sidebar.slider(
-        "Max Detections per Image", 1, 500, 100, 10,
+        "Max Detections per Image", 10, 500, 100, 10,
         key="max_detections",
         help="Maximum number of objects to detect in a single image."
     )
